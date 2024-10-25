@@ -1,0 +1,15 @@
+{
+  "name": "my-telegram-miniapp",
+  "version": "1.0.0",
+  "description": "A Telegram miniapp for managing a TRON wallet",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "tronweb": "^4.4.0",
+    "dotenv": "^16.0.0",
+    "body-parser": "^1.20.0"
+  }
+}
