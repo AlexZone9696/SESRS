@@ -14,50 +14,23 @@ const tronWeb = new TronWeb({
 // Хранилище пользователей (в продакшне лучше использовать базу данных)
 let users = {};
 
-// Эндпоинт для получения информации о пользователе
-app.post('/user', (req, res) => {
-  const { user_id, first_name, last_name, username } = req.body;
-  
-  // Создаем или получаем TRON-адрес пользователя
-  if (!users[user_id]) {
-    const address = tronWeb.address.fromPrivateKey(tronWeb.utils.crypto.generatePrivateKey());
-    users[user_id] = { first_name, last_name, username, address };
-  }
+// Эндпоинт для создания кошелька
+app.post('/create-wallet', (req, res) => {
+  const { user_id } = req.body;
 
-  res.json(users[user_id]);
-});
+  // Генерация нового кошелька
+  const newAccount = tronWeb.createAccount();
 
-// Эндпоинт для проверки баланса пользователя
-app.get('/balance/:user_id', async (req, res) => {
-  const userId = req.params.user_id;
-  const user = users[userId];
+  newAccount.then(account => {
+    const { address, privateKey } = account;
 
-  if (!user) return res.status(404).json({ error: 'User not found' });
+    // Сохраняем адрес и приватный ключ в users
+    users[user_id] = { address, privateKey };
 
-  try {
-    const balance = await tronWeb.trx.getBalance(user.address);
-    res.json({ balance: tronWeb.fromSun(balance) });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch balance' });
-  }
-});
-
-// Эндпоинт для отправки TRX
-app.post('/send', async (req, res) => {
-  const { from_user_id, to_address, amount } = req.body;
-
-  if (!users[from_user_id]) return res.status(404).json({ error: 'User not found' });
-
-  try {
-    const transaction = await tronWeb.trx.sendTransaction(
-      to_address,
-      tronWeb.toSun(amount),
-      users[from_user_id].address
-    );
-    res.json({ transaction });
-  } catch (error) {
-    res.status(500).json({ error: 'Transaction failed' });
-  }
+    res.json({ address, privateKey });
+  }).catch(err => {
+    res.status(500).json({ error: 'Failed to create wallet' });
+  });
 });
 
 app.listen(process.env.PORT, () => {
