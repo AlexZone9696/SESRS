@@ -8,65 +8,33 @@
 <body>
     <h1>Welcome to TRON Wallet</h1>
     <div id="user-info"></div>
-    <button onclick="getBalance()">Check Balance</button>
-    <button onclick="sendTransaction()">Send TRX</button>
-    <div id="balance-info"></div>
+    <button onclick="createWallet()">Create Wallet</button>
+    <div id="wallet-info"></div>
     <script>
         const tg = window.Telegram.WebApp;
         const userId = tg.initDataUnsafe.user.id;
 
-        function getUserInfo() {
-            fetch('/user', {
+        function createWallet() {
+            fetch('/create-wallet', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    user_id: userId,
-                    first_name: tg.initDataUnsafe.user.first_name,
-                    last_name: tg.initDataUnsafe.user.last_name,
-                    username: tg.initDataUnsafe.user.username
-                })
+                body: JSON.stringify({ user_id: userId })
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('user-info').innerText = `User: ${data.first_name} ${data.last_name}, Address: ${data.address}`;
+                if (data.address && data.privateKey) {
+                    document.getElementById('wallet-info').innerHTML = `
+                        <p><strong>Address:</strong> ${data.address}</p>
+                        <p><strong>Private Key:</strong> ${data.privateKey}</p>
+                    `;
+                } else {
+                    alert('Failed to create wallet. Please try again.');
+                }
             })
-            .catch(error => console.error('Error fetching user info:', error));
+            .catch(error => console.error('Error creating wallet:', error));
         }
-
-        function getBalance() {
-            fetch(`/balance/${userId}`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('balance-info').innerText = `Balance: ${data.balance} TRX`;
-                })
-                .catch(error => console.error('Error fetching balance:', error));
-        }
-
-        function sendTransaction() {
-            const toAddress = prompt('Enter the recipient address:');
-            const amount = prompt('Enter the amount to send (in TRX):');
-
-            fetch('/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    from_user_id: userId,
-                    to_address: toAddress,
-                    amount: amount
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(`Transaction sent: ${data.transaction.txID}`);
-            })
-            .catch(error => console.error('Error sending transaction:', error));
-        }
-
-        getUserInfo();
     </script>
 </body>
 </html>
